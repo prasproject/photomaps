@@ -1,99 +1,106 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gallery with Maps</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/image-conversion/dist/browser.js"></script>
-  <style>
-    #map {
-      height: 300px;
-      margin-top: 20px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Foto Viewer</title>
+    <style>
+        #map {
+            height: 300px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+    </style>
 </head>
 <body>
 
-<input type="file" accept="image/*" id="fileInput" style="display: none;">
-<button onclick="openFileInput()">Pilih Foto</button>
+    <h1>Foto Viewer</h1>
 
-<!-- Kontainer untuk menampilkan foto -->
-<div id="photo" style="display: none;">
-  <img src="" alt="Photo" id="photoImage">
-</div>
+    <!-- Form untuk mengunggah foto -->
+    <form id="uploadForm">
+        <label for="photo">Pilih Foto:</label>
+        <input type="file" id="photo" accept="image/*">
+        <br>
+        <label for="address">Alamat Lengkap:</label>
+        <input type="text" id="address" required>
+        <br>
+        <label for="latitude">Latitude:</label>
+        <input type="text" id="latitude" required>
+        <br>
+        <label for="longitude">Longitude:</label>
+        <input type="text" id="longitude" required>
+        <br>
+        <button type="button" onclick="uploadPhoto()">Unggah Foto</button>
+    </form>
 
-<div id="map"></div>
+    <!-- Tampilan foto dan informasi -->
+    <div id="photoInfo" style="display:none;">
+        <img id="uploadedPhoto" style="max-width: 100%;">
+        <p>Alamat: <span id="displayAddress"></span></p>
+        <p>Latitude: <span id="displayLatitude"></span></p>
+        <p>Longitude: <span id="displayLongitude"></span></p>
+        <div id="map"></div>
+        <a id="downloadLink" download="edited_photo.jpg" style="display:none;">Download Foto</a>
+    </div>
 
-<p id="address"></p>
-<p id="timestamp"></p>
+    <script>
+        function uploadPhoto() {
+            var photoInput = document.getElementById('photo');
+            var addressInput = document.getElementById('address').value;
+            var latitudeInput = document.getElementById('latitude').value;
+            var longitudeInput = document.getElementById('longitude').value;
 
-<button id="downloadButton" style="display: none;" onclick="downloadImage()">Unduh Foto</button>
+            if (photoInput.files.length > 0) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    var photo = document.getElementById('uploadedPhoto');
+                    photo.src = e.target.result;
 
-<script>
-  function openFileInput() {
-    // Membuka file input ketika tombol "Pilih Foto" diklik
-    document.getElementById('fileInput').click();
-  }
+                    // Tampilkan informasi
+                    document.getElementById('displayAddress').innerText = addressInput;
+                    document.getElementById('displayLatitude').innerText = latitudeInput;
+                    document.getElementById('displayLongitude').innerText = longitudeInput;
 
-  // Event listener untuk menangkap perubahan pada file input
-  document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+                    // Tampilkan peta
+                    showMap(latitudeInput, longitudeInput);
 
-  function handleFileSelect(event) {
-    var file = event.target.files[0];
+                    // Tampilkan tombol download
+                    document.getElementById('downloadLink').style.display = 'block';
+                };
 
-    if (file) {
-      // Menampilkan foto yang dipilih
-      var photoElement = document.getElementById('photo');
-      var photoImage = document.getElementById('photoImage');
-      photoImage.src = URL.createObjectURL(file);
-      photoElement.style.display = 'block';
+                reader.readAsDataURL(photoInput.files[0]);
 
-      // Menampilkan tombol "Unduh"
-      document.getElementById('downloadButton').style.display = 'block';
+                // Tampilkan informasi
+                document.getElementById('photoInfo').style.display = 'block';
+            }
+        }
 
-      // Simpan file ke sessionStorage untuk digunakan saat pengguna mengunggah
-      sessionStorage.setItem('selectedFile', JSON.stringify(file));
-    }
-  }
+        function showMap(latitude, longitude) {
+            var map = L.map('map').setView([latitude, longitude], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+            L.marker([latitude, longitude]).addTo(map)
+                .bindPopup('Lokasi Foto').openPopup();
+        }
 
-  function downloadImage() {
-    // Mendapatkan file yang disimpan di sessionStorage
-    var file = JSON.parse(sessionStorage.getItem('selectedFile'));
+        // Fungsi untuk menghasilkan file foto yang dapat diunduh
+        function downloadPhoto() {
+            var canvas = document.createElement('canvas');
+            var photo = document.getElementById('uploadedPhoto');
+            canvas.width = photo.width;
+            canvas.height = photo.height;
+            var ctx = canvas.getContext('2d');
+            ctx.drawImage(photo, 0, 0, canvas.width, canvas.height);
 
-    if (file) {
-      // Mengonversi dan mengunduh gambar sebagai file .jpg
-      const options = {
-        quality: 0.8,
-        mimeType: 'image/jpeg',
-      };
+            var downloadLink = document.getElementById('downloadLink');
+            canvas.toBlob(function (blob) {
+                var url = URL.createObjectURL(blob);
+                downloadLink.href = url;
+            }, 'image/jpeg');
+        }
+    </script>
 
-      imageConversion.convertImage(file, options)
-        .then((result) => {
-          // Buat objek Blob dari hasil konversi
-          var blob = new Blob([result], { type: 'image/jpeg' });
-
-          // Membuat URL objek Blob
-          var url = URL.createObjectURL(blob);
-
-          // Membuat elemen <a> untuk mengunduh
-          var a = document.createElement('a');
-          a.href = url;
-          a.download = 'converted_image.jpg';
-
-          // Menjalankan klik pada elemen <a>
-          a.click();
-
-          // Membersihkan URL objek Blob
-          URL.revokeObjectURL(url);
-        })
-        .catch((error) => {
-          console.error('Error converting image:', error);
-        });
-    }
-  }
-</script>
+    <!-- Pustaka Leaflet untuk peta -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 </body>
 </html>
