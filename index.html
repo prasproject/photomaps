@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gallery with Maps</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/image-conversion/dist/browser.js"></script>
   <style>
     #map {
       height: 300px;
@@ -29,8 +31,6 @@
 
 <button id="downloadButton" style="display: none;" onclick="downloadImage()">Unduh Foto</button>
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="https://unpkg.com/image-conversion/dist/browser.js"></script>
 <script>
   function openFileInput() {
     // Membuka file input ketika tombol "Pilih Foto" diklik
@@ -69,7 +69,7 @@
         mimeType: 'image/jpeg',
       };
 
-      convertImage(file, options)
+      imageConversion.convertImage(file, options)
         .then((result) => {
           // Buat objek Blob dari hasil konversi
           var blob = new Blob([result], { type: 'image/jpeg' });
