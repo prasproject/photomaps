@@ -8,48 +8,91 @@
   <style>
     #map {
       height: 300px;
+      margin-top: 20px;
     }
   </style>
 </head>
 <body>
 
-<?php
-// Simulasi data foto
-$photo = array(
-    'image' => 'path/to/your/photo.jpg',
-    'address' => 'Jalan Contoh No. 123, Kota Contoh',
-    'latitude' => -6.2088,
-    'longitude' => 106.8456,
-    'timestamp' => '2024-01-26 12:34:56'
-);
-?>
+<input type="file" accept="image/*" id="fileInput" style="display: none;">
+<button onclick="openFileInput()">Pilih Foto</button>
 
-<img src="<?php echo $photo['image']; ?>" alt="Photo">
+<!-- Kontainer untuk menampilkan foto -->
+<div id="photo" style="display: none;">
+  <img src="" alt="Photo" id="photoImage">
+</div>
 
 <div id="map"></div>
 
+<p id="address"></p>
+<p id="timestamp"></p>
+
+<button id="downloadButton" style="display: none;" onclick="downloadImage()">Unduh Foto</button>
+
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/image-conversion/dist/browser.js"></script>
 <script>
-  // Menyiapkan peta
-  var map = L.map('map').setView([<?php echo $photo['latitude']; ?>, <?php echo $photo['longitude']; ?>], 13);
+  function openFileInput() {
+    // Membuka file input ketika tombol "Pilih Foto" diklik
+    document.getElementById('fileInput').click();
+  }
 
-  // Menambahkan peta OpenStreetMap
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-  }).addTo(map);
+  // Event listener untuk menangkap perubahan pada file input
+  document.getElementById('fileInput').addEventListener('change', handleFileSelect);
 
-  // Menambahkan marker pada peta
-  L.marker([<?php echo $photo['latitude']; ?>, <?php echo $photo['longitude']; ?>]).addTo(map);
+  function handleFileSelect(event) {
+    var file = event.target.files[0];
 
-  // Menambahkan informasi alamat di bawah foto
-  var addressElement = document.createElement('p');
-  addressElement.textContent = '<?php echo $photo['address']; ?>';
-  document.body.appendChild(addressElement);
+    if (file) {
+      // Menampilkan foto yang dipilih
+      var photoElement = document.getElementById('photo');
+      var photoImage = document.getElementById('photoImage');
+      photoImage.src = URL.createObjectURL(file);
+      photoElement.style.display = 'block';
 
-  // Menambahkan informasi waktu di bawah foto
-  var timestampElement = document.createElement('p');
-  timestampElement.textContent = 'Taken at: <?php echo $photo['timestamp']; ?>';
-  document.body.appendChild(timestampElement);
+      // Menampilkan tombol "Unduh"
+      document.getElementById('downloadButton').style.display = 'block';
+
+      // Simpan file ke sessionStorage untuk digunakan saat pengguna mengunggah
+      sessionStorage.setItem('selectedFile', JSON.stringify(file));
+    }
+  }
+
+  function downloadImage() {
+    // Mendapatkan file yang disimpan di sessionStorage
+    var file = JSON.parse(sessionStorage.getItem('selectedFile'));
+
+    if (file) {
+      // Mengonversi dan mengunduh gambar sebagai file .jpg
+      const options = {
+        quality: 0.8,
+        mimeType: 'image/jpeg',
+      };
+
+      convertImage(file, options)
+        .then((result) => {
+          // Buat objek Blob dari hasil konversi
+          var blob = new Blob([result], { type: 'image/jpeg' });
+
+          // Membuat URL objek Blob
+          var url = URL.createObjectURL(blob);
+
+          // Membuat elemen <a> untuk mengunduh
+          var a = document.createElement('a');
+          a.href = url;
+          a.download = 'converted_image.jpg';
+
+          // Menjalankan klik pada elemen <a>
+          a.click();
+
+          // Membersihkan URL objek Blob
+          URL.revokeObjectURL(url);
+        })
+        .catch((error) => {
+          console.error('Error converting image:', error);
+        });
+    }
+  }
 </script>
 
 </body>
