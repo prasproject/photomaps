@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Photo Location Map</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+  <!-- Leaflet JavaScript -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+</head>
+<body>
+
+  <h1>Photo Location Map</h1>
+
+  <!-- Div untuk menampilkan peta -->
+  <div id="map" style="height: 400px;"></div>
+
+  <script>
+    // Inisialisasi peta
+    var map = L.map('map').setView([DEFAULT_LATITUDE, DEFAULT_LONGITUDE], 15);
+
+    // Tambahkan layer peta dari OpenStreetMap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Mendapatkan koordinat dari foto (gantilah dengan koordinat sebenarnya)
+    var photoLatitude = YOUR_PHOTO_LATITUDE;
+    var photoLongitude = YOUR_PHOTO_LONGITUDE;
+
+    // Tambahkan marker untuk lokasi foto
+    L.marker([photoLatitude, photoLongitude]).addTo(map)
+      .bindPopup('<b>Photo Location</b><br>Latitude: ' + photoLatitude + '<br>Longitude: ' + photoLongitude)
+      .openPopup();
+  </script>
+
+</body>
+</html>
